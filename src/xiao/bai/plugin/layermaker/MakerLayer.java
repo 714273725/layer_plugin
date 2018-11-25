@@ -16,7 +16,8 @@ import java.util.regex.Matcher;
 public class MakerLayer extends AnAction {
     public static String rootPath;
     public static final String SRC = File.separator + "src" + File.separator + "main" + File.separator + "java";
-    public static final String SRC2 = Matcher.quoteReplacement(File.separator) + "src" + Matcher.quoteReplacement(File.separator) + "main" + Matcher.quoteReplacement(File.separator) + "java";
+    public static final int Activity = 1;
+    public static final int Fragment = 0;
 
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -26,14 +27,14 @@ public class MakerLayer extends AnAction {
         String contextFilePath = file.getVirtualFile().getPath();
         String projectFilePath = project.getBasePath();
         String suffix = contextFilePath.replace(projectFilePath, "")
-                .replace("/",File.separator);
+                .replace("/", File.separator);
         int index = suffix.indexOf(SRC);
         String root = projectFilePath + suffix.substring(0, index + SRC.length());
         System.out.println(root);
         if (project != null) {
-            rootPath = project.getBasePath().replace("/",File.separator) + File.separator;
+            rootPath = project.getBasePath().replace("/", File.separator) + File.separator;
             try {
-                HomeMenu menu = new HomeMenu(root.replace("/",File.separator));
+                HomeMenu menu = new HomeMenu(root.replace("/", File.separator));
             } catch (Exception e1) {
                 e1.printStackTrace();
             }

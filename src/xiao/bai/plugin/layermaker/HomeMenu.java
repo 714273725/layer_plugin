@@ -33,6 +33,8 @@ import java.io.*;
 
 import javax.swing.*;
 
+import static xiao.bai.plugin.layermaker.MakerLayer.Activity;
+import static xiao.bai.plugin.layermaker.MakerLayer.Fragment;
 import static xiao.bai.plugin.layermaker.MakerLayer.SRC;
 
 /**
@@ -71,6 +73,11 @@ public class HomeMenu extends JFrame {
         if (history != null && history.length() > 0) {
 
         }
+        ButtonGroup buttonGroup = new ButtonGroup();//初始化分组
+        activity.setSelected(true);
+        buttonGroup.add(activity);
+        buttonGroup.add(fragment);
+
         moduleRootInput = new JTextField((history != null && history.length() > 0) ? history :
                 "输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
         //不允许调整窗口大小
@@ -155,7 +162,7 @@ public class HomeMenu extends JFrame {
         });
         parent.add(box);
         this.add(parent);
-        setSize(1000, 400);
+        setSize(1200, 400);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setVisible(true);
         setLocationRelativeTo(null);
@@ -163,10 +170,10 @@ public class HomeMenu extends JFrame {
     }
 
     /**
-     * @param moduleName 模块名（Index）
+     * @param layerName 模块名（Index）
      */
     private void makeAll(String layerRoot, String layerName) throws IOException {
-        File file = new File(MakerLayer.rootPath + File.separator +"PluginHolder");
+        File file = new File(MakerLayer.rootPath + File.separator + "PluginHolder");
         if (!file.exists()) {
             file.createNewFile();
         }
@@ -190,9 +197,26 @@ public class HomeMenu extends JFrame {
                 "将在" + layerRoot + "下创建layer " + layerName + "，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
         if (response == 0) {
             dismiss();
+            int viewType = fragment.isSelected() ? Fragment : Activity;
+            LayoutResMarker layoutResMarker = new LayoutResMarker(MakerLayer.rootPath, Module, layerName, viewType);
+            if (layoutResMarker.resExists()) {
+                int confirm = JOptionPane.showConfirmDialog(null,
+                        "layout文件重复，请检查你的层级关系，继续生成将覆盖原有的模块，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
+                if (confirm == 0) {
+                    String bingDing = layoutResMarker.create();
+                    new LayerMaker(ROOT, layerRoot, layerName, viewType).make(bingDing);
+                    dismiss();
+                }
+            } else {
+                String bingDing = layoutResMarker.create();
+                new LayerMaker(ROOT, layerRoot, layerName, viewType).make(bingDing);
+            }
+        } else {
+            dismiss();
         }
-        String bingDing = new LayoutResMarker(MakerLayer.rootPath, Module, layerName, 1).create();
-        new LayerMaker(ROOT, layerRoot,layerName, 1).make(bingDing);
+    }
+
+
        /* if (makeExecutor.exists() || makeDomain.exists()) {
             int response = JOptionPane.showConfirmDialog(null,
                     "模块已存在，继续生成将覆盖原有文件，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
@@ -259,9 +283,6 @@ public class HomeMenu extends JFrame {
                 dismiss();
             }
         }*/
-
-
-    }
 
     public void dismiss() {
         setVisible(false);
