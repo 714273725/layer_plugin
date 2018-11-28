@@ -21,10 +21,9 @@ package xiao.bai.plugin.layermaker;
 //.............................................  
 //               佛祖保佑             永无BUG
 
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
+import org.w3c.dom.Document;
 
 import java.awt.Dimension;
-import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -32,6 +31,8 @@ import java.awt.event.FocusListener;
 import java.io.*;
 
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import static xiao.bai.plugin.layermaker.MakerLayer.Activity;
 import static xiao.bai.plugin.layermaker.MakerLayer.Fragment;
@@ -57,11 +58,28 @@ public class HomeMenu extends JFrame {
     private JCheckBox notCreatView = new JCheckBox("不创建view层");
     private String ROOT;
     private String Module;
+    private String packageName;
+    //显示包名
+    private JLabel packageLable;
 
     public HomeMenu(String root) throws Exception {
+        //E:\pro\anPro\fastframework\app\src\main\java
         ROOT = root;
+        //app
         Module = ROOT.replace(SRC, "")
                 .replace(MakerLayer.rootPath, "");
+        //E:\pro\anPro\fastframework\app\src\main\AndroidManifest.xml
+        File AndroidManifest = new File(ROOT.replace("java", "AndroidManifest.xml"));
+        packageLable = new JLabel();
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(AndroidManifest);
+            packageName = document.getDocumentElement().getAttribute("package");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        packageLable.setText("包名:     " + packageName);
         moduleRootTips = new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录");
         rootLable = new JLabel("Module源码目录:" + ROOT);
         File file = new File(MakerLayer.rootPath + "/PluginHolder");
@@ -85,6 +103,7 @@ public class HomeMenu extends JFrame {
         JPanel parent = new JPanel();
         Box box = Box.createVerticalBox();
         box.add(new JLabel("Module:           " + Module));
+        box.add(packageLable);
         Box moduleBox = Box.createHorizontalBox();
         Box moduleInputBox = Box.createHorizontalBox();
         JLabel label = new JLabel("layer name:");
@@ -154,7 +173,7 @@ public class HomeMenu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    makeAll(moduleRootInput.getText(), moduleInput.getText());
+                    makeAll(moduleRootInput.getText(), moduleInput.getText(), packageName);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -172,7 +191,7 @@ public class HomeMenu extends JFrame {
     /**
      * @param layerName 模块名（Index）
      */
-    private void makeAll(String layerRoot, String layerName) throws IOException {
+    private void makeAll(String layerRoot, String layerName, String packageName) throws IOException {
         File file = new File(MakerLayer.rootPath + File.separator + "PluginHolder");
         if (!file.exists()) {
             file.createNewFile();
@@ -193,6 +212,14 @@ public class HomeMenu extends JFrame {
                     JOptionPane.DEFAULT_OPTION);
             return;
         }
+        if (packageName == null || packageName.length() == 0) {
+            JOptionPane.showConfirmDialog(null,
+                    "无法获取包名，这可能不是一个Android Lib，" +
+                            "请检查调起插件的文件位置和AndroidManifest.xml", "warning",
+                    JOptionPane.DEFAULT_OPTION);
+            return;
+        }
+
         int response = JOptionPane.showConfirmDialog(null,
                 "将在" + layerRoot + "下创建layer " + layerName + "，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
         if (response == 0) {
@@ -204,12 +231,12 @@ public class HomeMenu extends JFrame {
                         "layout文件重复，请检查你的层级关系，继续生成将覆盖原有的模块，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
                 if (confirm == 0) {
                     String bingDing = layoutResMarker.create();
-                    new LayerMaker(ROOT, layerRoot, layerName, viewType).make(bingDing);
+                    new LayerMaker(ROOT, layerRoot, layerName, viewType,packageName).make(bingDing);
                     dismiss();
                 }
             } else {
                 String bingDing = layoutResMarker.create();
-                new LayerMaker(ROOT, layerRoot, layerName, viewType).make(bingDing);
+                new LayerMaker(ROOT, layerRoot, layerName, viewType,packageName).make(bingDing);
             }
         } else {
             dismiss();

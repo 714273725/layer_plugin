@@ -28,7 +28,7 @@ public class Layout2HolderAction extends AnAction {
     public static final String Empty = "\\s*";
 
     public static final String Adapter =
-            "@AutoAdapter\\s*\\(\\s*id\\s*=\\s*R\\s*\\.\\s*layout\\s*\\.\\s*([a-z]|_|\\d)*\\s*," +
+            "@KAdapter\\s*\\(\\s*id\\s*=\\s*R\\s*\\.\\s*layout\\s*\\.\\s*([a-z]|_|\\d)*\\s*," +
                     "\\s*value(=|[A-Z]|[a-z]|_|\\d|\\s|\\.)*\\.\\s*class\\)";
 
     protected JFrame mDialog;

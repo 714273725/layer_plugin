@@ -1,31 +1,29 @@
 package xiao.bai.plugin.layermaker;
 
-import a.a.S;
 import xiao.bai.plugin.JavaWriter;
 
-import javax.lang.model.element.Modifier;
 import java.io.*;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.regex.Matcher;
 
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 public class LayerMaker {
     //模块名
     private String layerName;
+    private String modulePackageName;
     private String layerRoot;
     private String moduleRoot;
     private int viewType;
 
-    public LayerMaker(String moduleRoot, String layerRoot, String layerName, int viewType) {
+    public LayerMaker(String moduleRoot, String layerRoot, String layerName, int viewType, String modulePackageName) {
         this.layerName = layerName;
         this.layerRoot = layerRoot;
         this.moduleRoot = moduleRoot;
         this.viewType = viewType;
+        this.modulePackageName = modulePackageName;
     }
 
     public void make(String bindingName) throws IOException {
@@ -114,8 +112,8 @@ public class LayerMaker {
                 .emitImports("android.view.LayoutInflater")
                 .emitImports("android.view.View")
                 .emitImports("android.view.ViewGroup")
-                .emitImports("wan.hui.zhen.bai.xiao.R")
-                .emitImports("wan.hui.zhen.bai.xiao.databinding." + bindingName)
+                .emitImports(modulePackageName + ".R")
+                .emitImports(modulePackageName + ".databinding." + bindingName)
                 .emitAnnotation(viewMap)
                 .beginType(className + "ViewFragment", "class",
                         EnumSet.of(PUBLIC), baseClassName, className + "Contact.View")
@@ -143,8 +141,8 @@ public class LayerMaker {
                 .emitImports("android.support.annotation.Nullable")
                 .emitImports("javax.inject.Inject")
                 .emitImports("android.databinding.DataBindingUtil")
-                .emitImports("wan.hui.zhen.bai.xiao.R")
-                .emitImports("wan.hui.zhen.bai.xiao.databinding." + bindingName)
+                .emitImports(modulePackageName + ".R")
+                .emitImports(modulePackageName + ".databinding." + bindingName)
                 .emitAnnotation(viewMap)
                 .beginType(className + "ViewActivity", "class",
                         EnumSet.of(PUBLIC), baseClassName, className + "Contact.View")
