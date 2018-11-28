@@ -14,6 +14,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 
 public class MakerLayer extends AnAction {
+    //整个项目的根目录(E:\pro\anPro\fastframework\)
     public static String rootPath;
     public static final String SRC = File.separator + "src" + File.separator + "main" + File.separator + "java";
     public static final int Activity = 1;
@@ -24,11 +25,14 @@ public class MakerLayer extends AnAction {
         Project project = e.getData(PlatformDataKeys.PROJECT);
         Editor editor = e.getData(PlatformDataKeys.EDITOR);
         PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+        //当前文件的绝对路径
         String contextFilePath = file.getVirtualFile().getPath();
+        //整个项目的绝对路径
         String projectFilePath = project.getBasePath();
         String suffix = contextFilePath.replace(projectFilePath, "")
                 .replace("/", File.separator);
         int index = suffix.indexOf(SRC);
+        //该module的java目录
         String root = projectFilePath + suffix.substring(0, index + SRC.length());
         System.out.println(root);
         if (project != null) {

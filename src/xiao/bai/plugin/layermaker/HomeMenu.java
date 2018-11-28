@@ -21,7 +21,9 @@ package xiao.bai.plugin.layermaker;
 //.............................................  
 //               佛祖保佑             永无BUG
 
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -33,6 +35,7 @@ import java.io.*;
 import javax.swing.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static xiao.bai.plugin.layermaker.MakerLayer.Activity;
 import static xiao.bai.plugin.layermaker.MakerLayer.Fragment;
@@ -46,21 +49,22 @@ import static xiao.bai.plugin.layermaker.MakerLayer.SRC;
 
 public class HomeMenu extends JFrame {
     //显示module根目录
-    private JLabel rootLable;
+    private JLabel rootLabel;
     //输入模块
-    private JTextField moduleInput;
+    private JTextField layerInput;
     private JLabel moduleRootTips;
     //输入想要生成layer的目录(eg:输入com.xiao.bai.view,则在view下创建layer目录)
-    private JTextField moduleRootInput;
+    private JTextField layerRootInput;
     public JRadioButton activity = new JRadioButton("View Activity实现");
     public JRadioButton fragment = new JRadioButton("View Fragment实现");
-    public ButtonGroup g = new ButtonGroup();
-    private JCheckBox notCreatView = new JCheckBox("不创建view层");
+    //该module的java路径（E:\pro\anPro\fastframework\module_user\src\main\java）
     private String ROOT;
+    //该module的Name(module_user)
     private String Module;
+    //AndroidManifest中获取的包名
     private String packageName;
-    //显示包名
-    private JLabel packageLable;
+    //显示包名的控件
+    private JLabel packageLabel;
 
     public HomeMenu(String root) throws Exception {
         //E:\pro\anPro\fastframework\app\src\main\java
@@ -68,124 +72,205 @@ public class HomeMenu extends JFrame {
         //app
         Module = ROOT.replace(SRC, "")
                 .replace(MakerLayer.rootPath, "");
-        //E:\pro\anPro\fastframework\app\src\main\AndroidManifest.xml
-        File AndroidManifest = new File(ROOT.replace("java", "AndroidManifest.xml"));
-        packageLable = new JLabel();
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document document = db.parse(AndroidManifest);
-            packageName = document.getDocumentElement().getAttribute("package");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        packageLable.setText("包名:     " + packageName);
-        moduleRootTips = new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录");
-        rootLable = new JLabel("Module源码目录:" + ROOT);
-        File file = new File(MakerLayer.rootPath + "/PluginHolder");
-        String history = null;
-        if (file.exists()) {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-            history = bufferedReader.readLine();
-        }
-        if (history != null && history.length() > 0) {
-
-        }
-        ButtonGroup buttonGroup = new ButtonGroup();//初始化分组
-        activity.setSelected(true);
-        buttonGroup.add(activity);
-        buttonGroup.add(fragment);
-
-        moduleRootInput = new JTextField((history != null && history.length() > 0) ? history :
-                "输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
+        readModulePackage();
+        String history = readLayerRootHistory();
         //不允许调整窗口大小
         setResizable(false);
+        //创建一个面板
         JPanel parent = new JPanel();
+        //创建一个垂直的box，类似LinearLayout
         Box box = Box.createVerticalBox();
-        box.add(new JLabel("Module:           " + Module));
-        box.add(packageLable);
-        Box moduleBox = Box.createHorizontalBox();
-        Box moduleInputBox = Box.createHorizontalBox();
-        JLabel label = new JLabel("layer name:");
-        moduleInput = new JTextField("请输入layer name");
-
-        moduleInput.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (moduleInput.getText().trim().equals("请输入layer name")) {
-                    moduleInput.setText("");//让文本为空白
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (moduleInput.getText().trim().equals("")) {
-                    moduleInput.setText("请输入layer name");
-                }
-            }
-        });
-        moduleRootInput.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (moduleRootInput.getText().trim().equals("输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推")) {
-                    moduleRootInput.setText("");//让文本为空白
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (moduleRootInput.getText().trim().equals("")) {
-                    moduleRootInput.setText("输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
-                }
-            }
-        });
-        box.add(rootLable);
-        JLabel moduleInputTitle = new JLabel("layer根目录:");
-        moduleInputBox.add(moduleInputTitle);
-        moduleInputBox.add(Box.createHorizontalStrut(10));
-        moduleInputBox.add(moduleRootInput);
-        box.add(moduleInputBox);
-        box.add(moduleRootTips);
+        //show module name
+        addModuleName(box);
+        //show package name
+        addPackageName(box);
+        //show java src
+        addModuleSrcPath(box);
+        //show module root
+        addLayerRootInput(box, history);
         box.add(Box.createVerticalStrut(10));
-        moduleBox.add(label);
-        moduleBox.add(Box.createHorizontalStrut(10));
-        moduleBox.add(moduleInput);
-        box.add(moduleBox);
+        //show layer input
+        addLayerInput(box);
         box.add(Box.createVerticalStrut(10));
+        //show view type
+        addViewTypeBox(box);
         box.add(Box.createVerticalStrut(10));
-        Box viewBox = Box.createVerticalBox();
-        g.add(activity);
-        g.add(fragment);
-        viewBox.add(activity);
-        viewBox.add(fragment);
-        box.add(viewBox);
+        //show confirm
+        addConfirmMake(box);
         box.add(Box.createVerticalStrut(10));
-        /*box.add(notCreatView);*/
-        box.add(Box.createVerticalStrut(10));
-        Box allBox = Box.createHorizontalBox();
-        JButton allButton = new JButton("一键生成");
-        allButton.setPreferredSize(new Dimension(200, 20));
-        allBox.setPreferredSize(new Dimension(200, 20));
-        allBox.add(allButton);
-        box.add(allBox);
-        box.add(Box.createVerticalStrut(10));
-        allButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    makeAll(moduleRootInput.getText(), moduleInput.getText(), packageName);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
+        //把视图加到面板上
         parent.add(box);
+        //将面板显示在JFrame中
         this.add(parent);
         setSize(1200, 400);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setVisible(true);
         setLocationRelativeTo(null);
         parent.requestFocusInWindow();
+    }
+
+    private void addConfirmMake(Box box) {
+        Box allBox = Box.createHorizontalBox();
+        JButton allButton = new JButton("一键生成");
+        allButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    makeAll(layerRootInput.getText(), layerInput.getText(), packageName);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        allButton.setPreferredSize(new Dimension(200, 20));
+        allBox.setPreferredSize(new Dimension(200, 20));
+        allBox.add(allButton);
+        box.add(allBox);
+    }
+
+    private void addViewTypeBox(Box box) {
+        initViewType();
+        Box viewBox = Box.createVerticalBox();
+        viewBox.add(activity);
+        viewBox.add(fragment);
+        box.add(viewBox);
+    }
+
+    @Nullable
+    private String readLayerRootHistory() throws IOException {
+        //该文件用于记录上一次记录的层级目录在java目录下的相对包，一般来说是包名的超集
+        File file = new File(MakerLayer.rootPath + "/PluginHolder");
+        String history = null;
+        if (file.exists()) {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+            history = bufferedReader.readLine();
+        }
+        return history;
+    }
+
+    /**
+     * 读取module的包名
+     *
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void readModulePackage() throws ParserConfigurationException, SAXException, IOException {
+        //E:\pro\anPro\fastframework\app\src\main\AndroidManifest.xml
+        File AndroidManifest = new File(ROOT.replace("java", "AndroidManifest.xml"));
+        packageLabel = new JLabel();
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            //从AndroidManifest文件中读取包名，用于import R文件
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(AndroidManifest);
+            packageName = document.getDocumentElement().getAttribute("package");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 添加输入layer信息模块
+     */
+    private void addLayerInput(Box box) {
+        //横向的box,类似横向的LinearLayout
+        Box moduleBox = Box.createHorizontalBox();
+        JLabel layerLabel = new JLabel("layer name:");
+        layerInput = new JTextField("请输入layer name");
+        layerInput.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (layerInput.getText().trim().equals("请输入layer name")) {
+                    layerInput.setText("");//让文本为空白
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (layerInput.getText().trim().equals("")) {
+                    layerInput.setText("请输入layer name");
+                }
+            }
+        });
+        moduleBox.add(layerLabel);
+        moduleBox.add(Box.createHorizontalStrut(10));
+        moduleBox.add(layerInput);
+        box.add(moduleBox);
+    }
+
+    /**
+     * 添加显示输入layer root 的视图
+     *
+     * @param box
+     */
+    private void addLayerRootInput(Box box, String history) {
+        Box moduleInputBox = Box.createHorizontalBox();
+        layerRootInput = new JTextField((history != null && history.length() > 0) ? history :
+                "输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
+        layerRootInput.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (layerRootInput.getText().trim().equals("输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推")) {
+                    layerRootInput.setText("");//让文本为空白
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (layerRootInput.getText().trim().equals("")) {
+                    layerRootInput.setText("输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
+                }
+            }
+        });
+        JLabel moduleInputTitle = new JLabel("layer根目录:");
+        moduleRootTips = new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录");
+        moduleInputBox.add(moduleInputTitle);
+        moduleInputBox.add(Box.createHorizontalStrut(10));
+        moduleInputBox.add(layerRootInput);
+        box.add(moduleInputBox);
+        box.add(moduleRootTips);
+    }
+
+    /**
+     * 显示module java src目录
+     *
+     * @param box
+     * @param rootLabel
+     */
+    private void addModuleSrcPath(Box box) {
+        rootLabel = new JLabel("Module源码目录:" + ROOT);
+        box.add(rootLabel);
+    }
+
+    /**
+     * 添加一个显示Module 包名的视图
+     *
+     * @param box
+     */
+    private void addPackageName(Box box) {
+        packageLabel.setText("包名:     " + packageName);
+        box.add(packageLabel);
+    }
+
+    /**
+     * 添加一个显示Module名的视图
+     *
+     * @param box
+     */
+    private void addModuleName(Box box) {
+        box.add(new JLabel("Module:           " + Module));
+    }
+
+    /**
+     * 初始化分组,使得activity与fragment只能选其一，
+     * 并默认选中activity
+     */
+    private void initViewType() {
+        ButtonGroup buttonGroup = new ButtonGroup();
+        activity.setSelected(true);
+        buttonGroup.add(activity);
+        buttonGroup.add(fragment);
     }
 
     /**
@@ -231,12 +316,12 @@ public class HomeMenu extends JFrame {
                         "layout文件重复，请检查你的层级关系，继续生成将覆盖原有的模块，是否继续？", "warning", JOptionPane.YES_NO_OPTION);
                 if (confirm == 0) {
                     String bingDing = layoutResMarker.create();
-                    new LayerMaker(ROOT, layerRoot, layerName, viewType,packageName).make(bingDing);
+                    new LayerMaker(ROOT, layerRoot, layerName, viewType, packageName).make(bingDing);
                     dismiss();
                 }
             } else {
                 String bingDing = layoutResMarker.create();
-                new LayerMaker(ROOT, layerRoot, layerName, viewType,packageName).make(bingDing);
+                new LayerMaker(ROOT, layerRoot, layerName, viewType, packageName).make(bingDing);
             }
         } else {
             dismiss();

@@ -38,6 +38,10 @@ public class LayoutResMarker {
                 File.separator + "main" +
                 File.separator + "res" +
                 File.separator + "layout";
+        File layoutRoot = new File(resRoot);
+        if (!layoutRoot.exists()) {
+            layoutRoot.mkdirs();
+        }
         String resFile;
         if (viewType == MakerLayer.Activity) {
             resFile = resRoot + File.separator + "activity_" + layerPath.replace(".", "_") + ".xml";
