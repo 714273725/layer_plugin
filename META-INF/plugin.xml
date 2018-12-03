@@ -30,19 +30,6 @@
 
   <actions>
     <!-- Add your actions here -->
-    <action id="xiao.bai.plugin.layout2holder"
-            class="xiao.bai.plugin.holdermaker.Layout2HolderAction" text="Layout2Holder"
-            description="为一个或多个layout文件创建一个Holder">
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl P" second-keystroke="ctrl NUMPAD0"/>
-    </action>
-    <action id="xiao.bai.plugin.layermaker"
-            class="xiao.bai.plugin.layermaker.MakerLayer"
-            text="MakerLayer"
-            description="MakerLayer">
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="alt P" second-keystroke="alt NUMPAD0"/>
-    </action>
   </actions>
 
 </idea-plugin>
