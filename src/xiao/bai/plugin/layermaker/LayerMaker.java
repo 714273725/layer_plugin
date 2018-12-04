@@ -126,7 +126,7 @@ public class LayerMaker {
                         "@NonNull LayoutInflater", "inflater",
                         "@Nullable ViewGroup", "container",
                         "@Nullable Bundle", "savedInstanceState")
-                .emitStatement("mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_" + layerName.replace(".", "_") + ", container, false)")
+                .emitStatement("mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_" + getLayoutName() + ", container, false)")
                 .emitReturn("mBinding.getRoot()")
                 .endMethod()
                 .endType();
@@ -152,7 +152,7 @@ public class LayerMaker {
                 .emitAnnotation("Override", new HashMap<String, Object>())
                 .beginMethod("void", "onCreate", EnumSet.of(PROTECTED), "@Nullable Bundle", "savedInstanceState")
                 .emitSuper("onCreate", "savedInstanceState")
-                .emitStatement("mBinding = DataBindingUtil.setContentView(this, R.layout.activity_" + layerName.replace(".", "_") + ")")
+                .emitStatement("mBinding = DataBindingUtil.setContentView(this, R.layout.activity_" + getLayoutName() + ")")
                 .endMethod()
                 .endType();
         viewWriter.close();
@@ -182,5 +182,30 @@ public class LayerMaker {
 
         }
 
+    }
+
+    private String getLayoutName() {
+        char[] chars = layerName.replace(".", "_").toCharArray();
+        StringBuffer buffer = new StringBuffer();
+        boolean beforeIs_ = false;
+        for (int i = 0; i < chars.length; i++) {
+            char aChar = chars[i];
+            if (aChar >= 'A' && aChar <= 'Z') {
+                if (!beforeIs_) {
+                    buffer.append("_");
+                }
+                beforeIs_ = false;
+                buffer.append((char) (aChar + 32));
+            } else {
+                if (aChar == '_') {
+                    beforeIs_ = true;
+                } else {
+                    beforeIs_ = false;
+                }
+                buffer.append(aChar);
+            }
+        }
+        String s = buffer.toString();
+        return s;
     }
 }

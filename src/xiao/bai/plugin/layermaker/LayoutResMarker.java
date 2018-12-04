@@ -22,11 +22,13 @@ public class LayoutResMarker {
                 File.separator + "main" +
                 File.separator + "res" +
                 File.separator + "layout";
+        //activity_issue_UserIssueList => activity_issue_user_issue_list
+        String layoutName = getLayoutName();
         String resFile;
         if (viewType == MakerLayer.Activity) {
-            resFile = resRoot + File.separator + "activity_" + layerPath.replace(".", "_") + ".xml";
+            resFile = resRoot + File.separator + "activity_" + layoutName + ".xml";
         } else {
-            resFile = resRoot + File.separator + "fragment_" + layerPath.replace(".", "_") + ".xml";
+            resFile = resRoot + File.separator + "fragment_" + layoutName + ".xml";
         }
         File file = new File(resFile);
         return file.exists();
@@ -42,11 +44,14 @@ public class LayoutResMarker {
         if (!layoutRoot.exists()) {
             layoutRoot.mkdirs();
         }
+
+        //activity_issue_UserIssueList => activity_issue_user_issue_list
+        String layoutName = getLayoutName();
         String resFile;
         if (viewType == MakerLayer.Activity) {
-            resFile = resRoot + File.separator + "activity_" + layerPath.replace(".", "_") + ".xml";
+            resFile = resRoot + File.separator + "activity_" + layoutName + ".xml";
         } else {
-            resFile = resRoot + File.separator + "fragment_" + layerPath.replace(".", "_") + ".xml";
+            resFile = resRoot + File.separator + "fragment_" + layoutName + ".xml";
         }
         File file = new File(resFile);
         if (!file.exists())
@@ -82,5 +87,31 @@ public class LayoutResMarker {
         }
         builder.append("Binding");
         return builder.toString();
+    }
+
+    private String getLayoutName() {
+        char[] chars = layerPath.replace(".", "_").toCharArray();
+        StringBuffer buffer = new StringBuffer();
+        boolean beforeIs_ = false;
+        for (int i = 0; i < chars.length; i++) {
+            char aChar = chars[i];
+            if (aChar >= 'A' && aChar <= 'Z') {
+                if (!beforeIs_) {
+                    buffer.append("_");
+                }
+                beforeIs_ = false;
+                buffer.append((char) (aChar + 32));
+            } else {
+                if (aChar == '_') {
+                    beforeIs_ = true;
+                } else {
+                    beforeIs_ = false;
+                }
+                buffer.append(aChar);
+            }
+        }
+        String s = buffer.toString();
+        System.out.println(s);
+        return s;
     }
 }

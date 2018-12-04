@@ -39,6 +39,7 @@ public class MakerLayer extends AnAction {
             rootPath = project.getBasePath().replace("/", File.separator) + File.separator;
             try {
                 HomeMenu menu = new HomeMenu(root.replace("/", File.separator));
+                //HomeMenu2 menu2 = new HomeMenu2(root.replace("/", File.separator));
             } catch (Exception e1) {
                 e1.printStackTrace();
             }

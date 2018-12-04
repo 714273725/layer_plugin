@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -66,13 +66,51 @@ public class HomeMenu extends JFrame {
     //显示包名的控件
     private JLabel packageLabel;
 
+    private int windowWidth = 600;
+    private int borderWidth = 10;
+    private int innerWidth = windowWidth - borderWidth * 2;
+    private int nameWidth = 100;
+    private int panelHeight;
+
     public HomeMenu(String root) throws Exception {
+        //不允许调整窗口大小
+        setResizable(false);
         //E:\pro\anPro\fastframework\app\src\main\java
         ROOT = root;
         //app
         Module = ROOT.replace(SRC, "")
                 .replace(MakerLayer.rootPath, "");
         readModulePackage();
+        String history = readLayerRootHistory();
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.PAGE_AXIS));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(borderWidth, borderWidth, borderWidth, borderWidth));
+        JPanel moduleNamePanel = addModuleName();
+        contentPanel.add(moduleNamePanel);
+        panelHeight += moduleNamePanel.getHeight();
+        JPanel packageNamePanel = addPackageName();
+        contentPanel.add(packageNamePanel);
+        panelHeight += packageNamePanel.getHeight();
+        JPanel moduleSrcPanel = addModuleSrcPath();
+        contentPanel.add(moduleSrcPanel);
+        panelHeight += moduleSrcPanel.getHeight();
+        JPanel addLayerRootInputPanel = addLayerRootInput(history);
+        contentPanel.add(addLayerRootInputPanel);
+        panelHeight += addLayerRootInputPanel.getHeight();
+        JPanel addLayoutRootTipsPanel = addLayoutRootTips();
+        contentPanel.add(addLayoutRootTipsPanel);
+        panelHeight += addLayoutRootTipsPanel.getHeight();
+        JPanel addLayerInputPanel = addLayerInput();
+        contentPanel.add(addLayerInputPanel);
+        panelHeight += addLayerInputPanel.getHeight();
+        JPanel addViewTypeBoxPanel = addViewTypeBox();
+        contentPanel.add(addViewTypeBoxPanel);
+        panelHeight += addViewTypeBoxPanel.getHeight();
+        JPanel confirmMakePanel = addConfirmMake();
+        contentPanel.add(confirmMakePanel);
+        panelHeight += confirmMakePanel.getHeight();
+        panelHeight += borderWidth * 2;
+       /* readModulePackage();
         String history = readLayerRootHistory();
         //不允许调整窗口大小
         setResizable(false);
@@ -106,34 +144,48 @@ public class HomeMenu extends JFrame {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setVisible(true);
         setLocationRelativeTo(null);
-        parent.requestFocusInWindow();
+        parent.requestFocusInWindow();*/
+        contentPanel.setPreferredSize(new Dimension(windowWidth, 260));
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        getContentPane().add(contentPanel);
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
-    private void addConfirmMake(Box box) {
-        Box allBox = Box.createHorizontalBox();
+    private JPanel addLayoutRootTips() {
+        JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        innerPanel.add(new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录", JLabel.LEFT));
+        return innerPanel;
+    }
+
+    private JPanel addConfirmMake() {
+        JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
         JButton allButton = new JButton("一键生成");
-        allButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    makeAll(layerRootInput.getText(), layerInput.getText(), packageName);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+        allButton.setPreferredSize(new Dimension(nameWidth, 38));
+        allButton.addActionListener(e -> {
+            try {
+                makeAll(layerRootInput.getText(), layerInput.getText(), packageName);
+            } catch (IOException e1) {
+                e1.printStackTrace();
             }
         });
-        allButton.setPreferredSize(new Dimension(200, 20));
-        allBox.setPreferredSize(new Dimension(200, 20));
-        allBox.add(allButton);
-        box.add(allBox);
+        innerPanel.add(allButton);
+        return innerPanel;
     }
 
-    private void addViewTypeBox(Box box) {
+    private JPanel addViewTypeBox() {
+        JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
         initViewType();
         Box viewBox = Box.createVerticalBox();
         viewBox.add(activity);
         viewBox.add(fragment);
-        box.add(viewBox);
+        innerPanel.add(activity);
+        innerPanel.add(fragment);
+        return innerPanel;
     }
 
     @Nullable
@@ -173,11 +225,14 @@ public class HomeMenu extends JFrame {
     /**
      * 添加输入layer信息模块
      */
-    private void addLayerInput(Box box) {
-        //横向的box,类似横向的LinearLayout
-        Box moduleBox = Box.createHorizontalBox();
-        JLabel layerLabel = new JLabel("layer name:");
+    private JPanel addLayerInput() {
+        JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
+        JLabel layerLabel = new JLabel(" layer name:");
+        layerLabel.setPreferredSize(new Dimension(nameWidth, 26));
+        innerPanel.add(layerLabel);
         layerInput = new JTextField("请输入layer name");
+        layerInput.setPreferredSize(new Dimension(innerWidth - nameWidth, 26));
         layerInput.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -193,21 +248,19 @@ public class HomeMenu extends JFrame {
                 }
             }
         });
-        moduleBox.add(layerLabel);
-        moduleBox.add(Box.createHorizontalStrut(10));
-        moduleBox.add(layerInput);
-        box.add(moduleBox);
+        innerPanel.add(layerInput);
+        return innerPanel;
     }
 
     /**
      * 添加显示输入layer root 的视图
-     *
-     * @param box
      */
-    private void addLayerRootInput(Box box, String history) {
-        Box moduleInputBox = Box.createHorizontalBox();
+    private JPanel addLayerRootInput(String history) {
+        JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
         layerRootInput = new JTextField((history != null && history.length() > 0) ? history :
                 "输入layer根目录，格式为(xx.cc.gg)(xxx.xx)等，依此类推");
+        layerRootInput.setPreferredSize(new Dimension(innerWidth - nameWidth, 26));
         layerRootInput.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -223,34 +276,35 @@ public class HomeMenu extends JFrame {
                 }
             }
         });
-        JLabel moduleInputTitle = new JLabel("layer根目录:");
-        moduleRootTips = new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录");
-        moduleInputBox.add(moduleInputTitle);
-        moduleInputBox.add(Box.createHorizontalStrut(10));
-        moduleInputBox.add(layerRootInput);
-        box.add(moduleInputBox);
-        box.add(moduleRootTips);
+        JLabel moduleInputTitle = new JLabel(" layer根目录:");
+        moduleInputTitle.setPreferredSize(new Dimension(nameWidth, 26));
+        innerPanel.add(moduleInputTitle);
+        innerPanel.add(layerRootInput);
+        return innerPanel;
     }
 
     /**
      * 显示module java src目录
-     *
-     * @param box
-     * @param rootLabel
      */
-    private void addModuleSrcPath(Box box) {
-        rootLabel = new JLabel("Module源码目录:" + ROOT);
-        box.add(rootLabel);
+    private JPanel addModuleSrcPath() {
+        JPanel moduleSrcPanel = new JPanel();
+        moduleSrcPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        JLabel comp = new JLabel("Module源码目录:" + ROOT);
+        comp.setPreferredSize(new Dimension(innerWidth, 26));
+        moduleSrcPanel.add(comp);
+        return moduleSrcPanel;
     }
 
     /**
      * 添加一个显示Module 包名的视图
-     *
-     * @param box
      */
-    private void addPackageName(Box box) {
-        packageLabel.setText("包名:     " + packageName);
-        box.add(packageLabel);
+    private JPanel addPackageName() {
+        JPanel packageNamePanel = new JPanel();
+        packageNamePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        JLabel comp = new JLabel("包名:" + packageName, JLabel.LEFT);
+        comp.setPreferredSize(new Dimension(innerWidth, 26));
+        packageNamePanel.add(comp);
+        return packageNamePanel;
     }
 
     /**
@@ -258,8 +312,13 @@ public class HomeMenu extends JFrame {
      *
      * @param box
      */
-    private void addModuleName(Box box) {
-        box.add(new JLabel("Module:           " + Module));
+    private JPanel addModuleName() {
+        JPanel modulePanel = new JPanel();
+        modulePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        JLabel comp = new JLabel("ModuleName:" + Module, JLabel.LEFT);
+        comp.setPreferredSize(new Dimension(innerWidth, 26));
+        modulePanel.add(comp);
+        return modulePanel;
     }
 
     /**
