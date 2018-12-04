@@ -66,7 +66,7 @@ public class HomeMenu extends JFrame {
     //显示包名的控件
     private JLabel packageLabel;
 
-    private int windowWidth = 600;
+    private int windowWidth = 800;
     private int borderWidth = 10;
     private int innerWidth = windowWidth - borderWidth * 2;
     private int nameWidth = 100;
@@ -145,7 +145,7 @@ public class HomeMenu extends JFrame {
         setVisible(true);
         setLocationRelativeTo(null);
         parent.requestFocusInWindow();*/
-        contentPanel.setPreferredSize(new Dimension(windowWidth, 260));
+        contentPanel.setPreferredSize(new Dimension(windowWidth, 320));
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         getContentPane().add(contentPanel);
         pack();
@@ -156,7 +156,10 @@ public class HomeMenu extends JFrame {
     private JPanel addLayoutRootTips() {
         JPanel innerPanel = new JPanel();
         innerPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        innerPanel.add(new JLabel("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录", JLabel.LEFT));
+        JTextArea comp = new JTextArea("例: 输入com.xiao.bai.view,则在" + ROOT + "/com/xiao/bai/view下创建layer的目录");
+        comp.setPreferredSize(new Dimension(innerWidth, 52));
+        comp.setLineWrap(true);        //激活自动换行功能
+        innerPanel.add(comp);
         return innerPanel;
     }
 
@@ -289,8 +292,9 @@ public class HomeMenu extends JFrame {
     private JPanel addModuleSrcPath() {
         JPanel moduleSrcPanel = new JPanel();
         moduleSrcPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        JLabel comp = new JLabel("Module源码目录:" + ROOT);
-        comp.setPreferredSize(new Dimension(innerWidth, 26));
+        JTextArea comp = new JTextArea("Module源码目录:" + ROOT);
+        comp.setPreferredSize(new Dimension(innerWidth, 52));
+        comp.setLineWrap(true);
         moduleSrcPanel.add(comp);
         return moduleSrcPanel;
     }
@@ -309,8 +313,6 @@ public class HomeMenu extends JFrame {
 
     /**
      * 添加一个显示Module名的视图
-     *
-     * @param box
      */
     private JPanel addModuleName() {
         JPanel modulePanel = new JPanel();
